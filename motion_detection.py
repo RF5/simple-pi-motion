@@ -39,16 +39,11 @@ class Recorder:
             self.detected = False
             self.i += 1
 
-            path = "captures/%s/" % datetime.datetime.now().isoformat()
-
-            os.makedirs(path)
-
             self.camera.start_preview()
 
-            for x in range(1, 16):
-                filename = "detected-%02d.jpg" % x
-                self.camera.capture(path + filename, use_video_port=True)
-                print("Captured " + filename)
+            self.camera.start_recording('/home/pi/video.h264')
+            time.sleep(6)
+            self.camera.stop_recording()
 
             self.camera.stop_preview()
 
@@ -82,9 +77,11 @@ class PiMotion(object):
         self.callback = callback
 
     def start(self):
+        stime = time.time()
         with picamera.PiCamera() as camera:
             camera.resolution = (1280, 720)
             camera.framerate = 10
+            camera.rotation = 180
             recorder = Recorder(camera)
 
             time.sleep(2)
@@ -94,7 +91,7 @@ class PiMotion(object):
                 print("STARTED RECCCC")
                 camera.start_recording('/dev/null', format='h264', motion_output=motion)
 
-                while True:
+                while time.time() - stime < 30:
                     recorder.tick()
                     time.sleep(1)
             finally:
@@ -103,3 +100,7 @@ class PiMotion(object):
 
             #camera.wait_recording(20)
             #camera.stop_recording()
+
+if __name__ == "__main__":
+    spi = PiMotion()
+    spi.start()
