@@ -6,6 +6,7 @@ import time
 from telegram_util import TelegramManager
 import json
 from subprocess import run
+import os
 
 record_length = 6
 
@@ -23,6 +24,7 @@ class Recorder:
 
     def tick(self):
         if self.detected:
+            os.remove('output.mp4')
             print("Started working on capturing")
             self.working = True
             self.detected = False
