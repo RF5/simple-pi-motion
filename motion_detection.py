@@ -1,43 +1,46 @@
 import numpy as np
 import picamera
 import picamera.array
-import datetime
 import time
-from telegram_util import TelegramManager
-import json
+import json, os
 from subprocess import run
-import os
+from telegram_util import TelegramManager
 
 record_length = 6
+debug = True
+min_interval = 20
 
 class Recorder:
     def __init__(self, camera, bot):
         self.camera = camera
         self.detected = False
         self.working = False
-        self.i = 0
         self.bot = bot
+        self.stime = time.time()
 
     def motion_detected(self):
         if not self.working:
             self.detected = True
 
     def tick(self):
+        if time.time() - self.stime < min_interval:
+            return
         if self.detected:
             os.remove('output.mp4')
-            print("Started working on capturing")
+
+            if debug: print("Started working on capturing")
             self.working = True
             self.detected = False
-            self.i += 1
 
-            self.camera.start_recording('output.h264', splitter_port=2, resize=(320, 240))
+            self.camera.start_recording('output.h264', splitter_port=2, resize=(1280, 720))
             time.sleep(record_length)
             self.camera.stop_recording(splitter_port=2)
 
-            print("Finished capturing")
+            if debug: print("Finished capturing")
             run("MP4Box -add output.h264 output.mp4", shell=True).returncode
             time.sleep(1)
             self.bot.send_video()
+            self.stime = time.time()
             self.working = False
 
 class DetectMotion(picamera.array.PiMotionAnalysis):
@@ -54,26 +57,25 @@ class DetectMotion(picamera.array.PiMotionAnalysis):
         # If there're more than 10 vectors with a magnitude greater
         # than 60, then say we've detected motion
         if (a > 40).sum() > 10:#2:
-            print('Motion detected!')
+            if debug: print('Motion detected!')
             if self.first:
                 self.first = False
                 return
             self.recorder.motion_detected()
 
 class PiMotion(object):
-    def __init__(self, debug=False):
-        self.debug = debug
+    def __init__(self):
         self.bot = TelegramManager(json.loads(open('./bot_info.json', 'r').read())['token'])
 
     def start(self):
         stime = time.time()
         with picamera.PiCamera() as camera:
             camera.resolution = (1280, 720)
-            camera.framerate = 10
+            camera.framerate = 30
             camera.rotation = 180
             recorder = Recorder(camera, self.bot)
-
             time.sleep(2)
+
             motion = DetectMotion(camera, recorder)
             try:
                 print("STARTED RECCCC")
