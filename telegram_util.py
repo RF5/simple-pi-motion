@@ -16,8 +16,6 @@ class TelegramManager(object):
 
     def send_video(self):
         self.bot.send_video(chat_id=chat_id, video=open('output.mp4', 'rb'), supports_streaming=True)
-        time.sleep(0.5)
-
         print("Video(s) sent!")
 
     def link_function(self, keyword, func):

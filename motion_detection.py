@@ -5,6 +5,7 @@ import datetime
 import time
 from telegram_util import TelegramManager
 import json
+from subprocess import call
 
 record_length = 6
 
@@ -27,11 +28,13 @@ class Recorder:
             self.detected = False
             self.i += 1
 
-            self.camera.start_recording('/home/pi/video.h264', splitter_port=2, resize=(320, 240))
+            self.camera.start_recording('output.h264', splitter_port=2, resize=(320, 240))
             time.sleep(record_length)
             self.camera.stop_recording(splitter_port=2)
 
             print("Finished capturing")
+            call("MP4Box -add output.h264 output.mp4", shell=True)
+            time.sleep(1)
             self.bot.send_video()
             self.working = False
 
