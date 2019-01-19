@@ -3,30 +3,18 @@ import picamera
 import picamera.array
 import datetime
 import time
+from telegram_util import TelegramManager
+import json
 
-# class Recorder(object):
-#     def __init__(self, camera):
-#         self.busy = False
-#         self.camera = camera
-
-#     def record(self):
-#         if self.busy:
-#             return
-#         self.busy = True
-#         print("Starting Recording")
-#         self.camera.resolution = (640, 480)
-#         self.camera.start_recording('my_video.h264', splitter_port=2)
-#         self.camera.wait_recording(10, splitter_port=2)
-#         self.camera.stop_recording(splitter_port=2)
-#         print("Finished Recording")
-#         self.busy = False
+record_length = 6
 
 class Recorder:
-    def __init__(self, camera):
+    def __init__(self, camera, bot):
         self.camera = camera
         self.detected = False
         self.working = False
         self.i = 0
+        self.bot = bot
 
     def motion_detected(self):
         if not self.working:
@@ -39,16 +27,12 @@ class Recorder:
             self.detected = False
             self.i += 1
 
-            self.camera.start_preview()
-
-            self.camera.start_recording('/home/pi/video.h264')
-            time.sleep(6)
-            self.camera.stop_recording()
-
-            self.camera.stop_preview()
+            self.camera.start_recording('/home/pi/video.h264', splitter_port=2, resize=(320, 240))
+            time.sleep(record_length)
+            self.camera.stop_recording(splitter_port=2)
 
             print("Finished capturing")
-
+            self.bot.send_video()
             self.working = False
 
 class DetectMotion(picamera.array.PiMotionAnalysis):
@@ -72,9 +56,9 @@ class DetectMotion(picamera.array.PiMotionAnalysis):
             self.recorder.motion_detected()
 
 class PiMotion(object):
-    def __init__(self, callback=None, debug=False):
+    def __init__(self, debug=False):
         self.debug = debug
-        self.callback = callback
+        self.bot = TelegramManager(json.loads(open('./bot_info.json', 'r').read())['token'])
 
     def start(self):
         stime = time.time()
@@ -82,10 +66,9 @@ class PiMotion(object):
             camera.resolution = (1280, 720)
             camera.framerate = 10
             camera.rotation = 180
-            recorder = Recorder(camera)
+            recorder = Recorder(camera, self.bot)
 
             time.sleep(2)
-
             motion = DetectMotion(camera, recorder)
             try:
                 print("STARTED RECCCC")
@@ -97,9 +80,6 @@ class PiMotion(object):
             finally:
                 camera.stop_recording()
                 print("ENDED RECC")
-
-            #camera.wait_recording(20)
-            #camera.stop_recording()
 
 if __name__ == "__main__":
     spi = PiMotion()
