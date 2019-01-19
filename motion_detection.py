@@ -32,7 +32,7 @@ class Recorder:
             self.working = True
             self.detected = False
 
-            self.camera.start_recording('output.h264', splitter_port=2, resize=(1280, 720))
+            self.camera.start_recording('output.h264', splitter_port=2, resize=(320, 240))
             time.sleep(record_length)
             self.camera.stop_recording(splitter_port=2)
 
