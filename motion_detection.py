@@ -6,9 +6,15 @@ import json, os
 from subprocess import run
 from telegram_util import TelegramManager
 
-record_length = 6
+record_length = 6 #seconds
 debug = True
-min_interval = 20
+min_interval = 20 #seconds
+camera_framerate = 10 #fps
+camera_rotation = 180 #degrees
+upload_resolution = (320, 240) #pixels
+stop_after = 30#seconds, set to None to run forever
+n_blocks_threshold = 10
+blockdiff_threshold = 40
 
 class Recorder:
     def __init__(self, camera, bot):
@@ -27,12 +33,11 @@ class Recorder:
             return
         if self.detected:
             os.remove('output.mp4')
-
             if debug: print("Started working on capturing")
             self.working = True
             self.detected = False
 
-            self.camera.start_recording('output.h264', splitter_port=2, resize=(320, 240))
+            self.camera.start_recording('output.h264', splitter_port=2, resize=upload_resolution)
             time.sleep(record_length)
             self.camera.stop_recording(splitter_port=2)
 
@@ -54,9 +59,9 @@ class DetectMotion(picamera.array.PiMotionAnalysis):
                 np.square(a['x'].astype(np.float)) +
                 np.square(a['y'].astype(np.float))
             ).clip(0, 255).astype(np.uint8)
-        # If there're more than 10 vectors with a magnitude greater
-        # than 60, then say we've detected motion
-        if (a > 40).sum() > 10:#2:
+        # If there're more than n_blocks_threshold vectors with a magnitude greater
+        # than blockdiff_threshold, then say we've detected motion
+        if (a > blockdiff_threshold).sum() > n_blocks_threshold:
             if debug: print('Motion detected!')
             if self.first:
                 self.first = False
@@ -71,22 +76,27 @@ class PiMotion(object):
         stime = time.time()
         with picamera.PiCamera() as camera:
             camera.resolution = (1280, 720)
-            camera.framerate = 30
-            camera.rotation = 180
+            camera.framerate = camera_framerate
+            camera.rotation = camera_rotation
             recorder = Recorder(camera, self.bot)
             time.sleep(2)
 
             motion = DetectMotion(camera, recorder)
             try:
-                print("STARTED RECCCC")
+                print("STARTED monitoring")
                 camera.start_recording('/dev/null', format='h264', motion_output=motion)
 
-                while time.time() - stime < 30:
-                    recorder.tick()
-                    time.sleep(1)
+                if stop_after is not None:
+                    while time.time() - stime < stop_after:
+                        recorder.tick()
+                        time.sleep(1)
+                else:
+                    while True:
+                        recorder.tick()
+                        time.sleep(1) 
             finally:
                 camera.stop_recording()
-                print("ENDED RECC")
+                print("ENDED monitoring")
 
 if __name__ == "__main__":
     spi = PiMotion()

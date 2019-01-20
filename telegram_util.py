@@ -6,7 +6,6 @@ from telegram.ext import MessageHandler, CommandHandler
 chat_id = json.loads(open('./bot_info.json', 'r').read())['my_chat_id'] # hard-code the chat_id of the bot and your phone
 
 class TelegramManager(object):
-
     def __init__(self, token):
         self.updater = telegram.ext.Updater(token=token)
         self.bot = self.updater.bot
