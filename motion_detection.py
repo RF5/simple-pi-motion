@@ -22,7 +22,7 @@ class Recorder:
         self.detected = False
         self.working = False
         self.bot = bot
-        self.stime = time.time()
+        self.stime = time.time() - (min_interval + 5)
 
     def motion_detected(self):
         if not self.working:
@@ -99,5 +99,6 @@ class PiMotion(object):
                 print("ENDED monitoring")
 
 if __name__ == "__main__":
+	time.sleep(10) #if you run this script on startup from rc.local, keep this here.
     spi = PiMotion()
     spi.start()
