@@ -17,7 +17,7 @@ stop_after = 30#seconds, set to None to run forever
 n_blocks_threshold = 10
 blockdiff_threshold = 40
 
-
+dir_path = Path(os.path.dirname(os.path.realpath(__file__)))
 
 class Recorder:
     def __init__(self, camera, bot):
