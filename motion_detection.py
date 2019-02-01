@@ -99,6 +99,6 @@ class PiMotion(object):
                 print("ENDED monitoring")
 
 if __name__ == "__main__":
-	time.sleep(10) #if you run this script on startup from rc.local, keep this here.
+    time.sleep(10) #if you run this script on startup from rc.local, keep this here.
     spi = PiMotion()
     spi.start()
