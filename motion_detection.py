@@ -35,12 +35,12 @@ class Recorder:
         if time.time() - self.stime < min_interval:
             return
         if self.detected:
-            os.remove(dir_path/'output.mp4')
+            os.remove(str(dir_path/'output.mp4'))
             if debug: print("Started working on capturing")
             self.working = True
             self.detected = False
 
-            self.camera.start_recording(dir_path/'output.h264', splitter_port=2, resize=upload_resolution)
+            self.camera.start_recording(str(dir_path/'output.h264'), splitter_port=2, resize=upload_resolution)
             time.sleep(record_length)
             self.camera.stop_recording(splitter_port=2)
 
@@ -73,7 +73,7 @@ class DetectMotion(picamera.array.PiMotionAnalysis):
 
 class PiMotion(object):
     def __init__(self):
-        self.bot = TelegramManager(json.loads(open(dir_path/'bot_info.json', 'r').read()))
+        self.bot = TelegramManager(json.loads(open(str(dir_path/'bot_info.json'), 'r').read()))
 
     def start(self):
         stime = time.time()

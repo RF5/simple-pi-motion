@@ -16,7 +16,7 @@ class TelegramManager(object):
         self.bot.send_message(chat_id=self.chat_id, text="Ping test")
 
     def send_video(self):
-        self.bot.send_video(chat_id=self.chat_id, video=open(dir_path/'output.mp4', 'rb'), supports_streaming=True)
+        self.bot.send_video(chat_id=self.chat_id, video=open(str(dir_path/'output.mp4'), 'rb'), supports_streaming=True)
         print("Video(s) sent!")
 
     def link_function(self, keyword, func):
