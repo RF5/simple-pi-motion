@@ -5,6 +5,7 @@ import time
 import json, os
 from subprocess import run
 from telegram_util import TelegramManager
+from pathlib import Path
 
 record_length = 6 #seconds
 debug = True
@@ -15,6 +16,8 @@ upload_resolution = (320, 240) #pixels
 stop_after = 30#seconds, set to None to run forever
 n_blocks_threshold = 10
 blockdiff_threshold = 40
+
+
 
 class Recorder:
     def __init__(self, camera, bot):
@@ -32,17 +35,17 @@ class Recorder:
         if time.time() - self.stime < min_interval:
             return
         if self.detected:
-            os.remove('output.mp4')
+            os.remove(dir_path/'output.mp4')
             if debug: print("Started working on capturing")
             self.working = True
             self.detected = False
 
-            self.camera.start_recording('output.h264', splitter_port=2, resize=upload_resolution)
+            self.camera.start_recording(dir_path/'output.h264', splitter_port=2, resize=upload_resolution)
             time.sleep(record_length)
             self.camera.stop_recording(splitter_port=2)
 
             if debug: print("Finished capturing")
-            run("MP4Box -add output.h264 output.mp4", shell=True).returncode
+            run("MP4Box -add " + str(dir_path/'output.h264') + ' ' + str(dir_path/'output.mp4'), shell=True).returncode
             time.sleep(1)
             self.bot.send_video()
             self.stime = time.time()
@@ -70,7 +73,7 @@ class DetectMotion(picamera.array.PiMotionAnalysis):
 
 class PiMotion(object):
     def __init__(self):
-        self.bot = TelegramManager(json.loads(open('./bot_info.json', 'r').read())['token'])
+        self.bot = TelegramManager(json.loads(open(dir_path/'bot_info.json', 'r').read()))
 
     def start(self):
         stime = time.time()
